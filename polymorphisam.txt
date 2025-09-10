@@ -1,0 +1,263 @@
+#ifndef MYOBJECT_H
+#define MYOBJECT_H
+/*****************************MyObject.h/*****************
+#include <iostream>
+using namespace std;
+
+class MyObject {
+public:
+    int id;
+    char name[50];
+    char address[100];
+
+    virtual void getData();
+    virtual void showData();
+    virtual ~MyObject() {} // virtual destructor for polymorphism
+};
+
+#endif
+
+///////////////////////////////////////////////////////////////////////////
+#include "MyObject.h"
+#include <cstring>
+/*********************************myobject.cpp/*****************************
+void MyObject::getData() {
+    cout << "Enter ID: ";
+    cin >> id;
+    cin.ignore();
+    cout << "Enter Name: ";
+    cin.getline(name, 50);
+    cout << "Enter Address: ";
+    cin.getline(address, 100);
+}
+
+void MyObject::showData() {
+    cout << "ID: " << id 
+         << ", Name: " << name 
+         << ", Address: " << address << endl;
+}
+
+
+
+////////////////////////////////////////////////////////////////////////////
+/*************************employee.h***************/
+#ifndef EMPLOYEE_H
+#define EMPLOYEE_H
+
+#include "MyObject.h"
+
+class Employee : public MyObject {
+public:
+    double salary;
+
+    void getData() override;
+    void showData() override;
+};
+
+#endif
+
+
+///////////////////////////////////////////////////////////////////////////////
+/****************employee.cpp*************************************///////
+#include "Employee.h"
+#include <iostream>
+using namespace std;
+
+void Employee::getData() {
+    MyObject::getData();
+    cout << "Enter Salary: ";
+    cin >> salary;
+    cin.ignore();
+}
+
+void Employee::showData() {
+    MyObject::showData();
+    cout << "Salary: " << salary << endl;
+}
+/////////////////////////////////////////////////////////////////////////////////////////
+
+////////////////////*genericservice.h**************//////////////
+#ifndef GENERICSERVICE_H
+#define GENERICSERVICE_H
+
+#include "MyObject.h"
+#include <vector>
+using namespace std;
+
+class GenericService {
+public:
+    static vector<MyObject*> arr;
+
+    static void addObject();
+    static void displayAll();
+    static void searchById();
+    static void searchByName();
+    static void sortById();
+    static void sortByName();
+    static void modifyAddressById();
+    static void cleanup(); // free memory
+};
+
+#endif
+
+///////////////////////////////////////////////////////////////////////
+
+///////////////////********genericservice.cpp*********//////////////
+
+#include "GenericService.h"
+#include "Employee.h"
+#include <iostream>
+#include <cstring>
+#include <stdexcept>
+using namespace std;
+
+vector<MyObject*> GenericService::arr;
+
+void GenericService::addObject() {
+    int choice;
+    cout << "1. Add Person\n2. Add Employee\nEnter choice: ";
+    cin >> choice;
+
+    MyObject* obj = nullptr;
+    if (choice == 1) {
+        obj = new MyObject();
+    } else if (choice == 2) {
+        obj = new Employee();
+    } else {
+        cout << "Invalid choice\n";
+        return;
+    }
+
+    obj->getData();
+    arr.push_back(obj);
+}
+
+void GenericService::displayAll() {
+    if (arr.empty()) {
+        cout << "No object to display" << endl;
+        return;
+    }
+    for (auto obj : arr) {
+        obj->showData();
+    }
+}
+
+void GenericService::searchById() {
+    int id;
+    cout << "Enter ID: ";
+    cin >> id;
+
+    for (auto obj : arr) {
+        if (obj->id == id) {
+            obj->showData();
+            return;
+        }
+    }
+    throw runtime_error("ID not found!");
+}
+
+void GenericService::searchByName() {
+    char name[50];
+    cin.ignore();
+    cout << "Enter name: ";
+    cin.getline(name, 50);
+
+    for (auto obj : arr) {
+        if (strcmp(obj->name, name) == 0) {
+            obj->showData();
+            return;
+        }
+    }
+    throw runtime_error("Name not found!");
+}
+
+void GenericService::sortById() {
+    for (size_t i = 0; i < arr.size() - 1; i++) {
+        for (size_t j = i + 1; j < arr.size(); j++) {
+            if (arr[i]->id > arr[j]->id) {
+                swap(arr[i], arr[j]);
+            }
+        }
+    }
+    cout << "Sorted by ID" << endl;
+}
+
+void GenericService::sortByName() {
+    for (size_t i = 0; i < arr.size() - 1; i++) {
+        for (size_t j = i + 1; j < arr.size(); j++) {
+            if (strcmp(arr[i]->name, arr[j]->name) > 0) {
+                swap(arr[i], arr[j]);
+            }
+        }
+    }
+    cout << "Sorted by Name" << endl;
+}
+
+void GenericService::modifyAddressById() {
+    int id;
+    cout << "Enter ID to modify address: ";
+    cin >> id;
+
+    for (auto obj : arr) {
+        if (obj->id == id) {
+            cout << "Enter new address: ";
+            cin.ignore();
+            cin.getline(obj->address, 100);
+            cout << "Address updated successfully!" << endl;
+            return;
+        }
+    }
+    throw runtime_error("ID not found for modification!");
+}
+
+void GenericService::cleanup() {
+    for (auto obj : arr) {
+        delete obj;
+    }
+    arr.clear();
+}
+///////////////////////////////////////////////////////////
+
+///////////////***main.cpp**********////////////////
+
+#include "GenericService.h"
+#include <iostream>
+using namespace std;
+
+int main() {
+    int choice;
+    do {
+        cout << "\nMenu:\n";
+        cout << "1. Add Person/Employee\n";
+        cout << "2. Search by ID\n";
+        cout << "3. Display All\n";
+        cout << "4. Search by Name\n";
+        cout << "5. Sort by ID\n";
+        cout << "6. Sort by Name\n";
+        cout << "7. Modify Address by ID\n";
+        cout << "8. Exit\n";
+        cout << "Enter choice: ";
+        cin >> choice;
+
+        try {
+            switch (choice) {
+                case 1: GenericService::addObject(); break;
+                case 2: GenericService::searchById(); break;
+                case 3: GenericService::displayAll(); break;
+                case 4: GenericService::searchByName(); break;
+                case 5: GenericService::sortById(); break;
+                case 6: GenericService::sortByName(); break;
+                case 7: GenericService::modifyAddressById(); break;
+                case 8: cout << "Exiting...\n"; break;
+                default: cout << "Invalid choice\n";
+            }
+        } catch (const exception& e) {
+            cout << "Error: " << e.what() << endl;
+        }
+
+    } while (choice != 8);
+
+    GenericService::cleanup(); // memory free
+    return 0;
+}
+
